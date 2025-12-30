@@ -668,7 +668,7 @@ h3 {
     }
 
     .notes-list {
-        max-height: 280px;
+        max-height: calc(100vh - 200px); /* 使用动态计算高度，适配手机屏幕 */
     }
 
     .note-item {
