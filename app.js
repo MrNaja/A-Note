@@ -104,20 +104,13 @@ class MobileNoteApp {
             this.goBack();
         });
 
-        // 底部导航栏点击事件
-        const navItems = document.querySelectorAll('.bottom-nav-item');
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                // 移除所有active类
-                navItems.forEach(navItem => navItem.classList.remove('active'));
-                // 添加当前active类
-                item.classList.add('active');
-                
-                // 处理页面切换
-                const pageName = item.getAttribute('data-page');
-                this.navigateTo(pageName);
+        // 设置按钮点击事件
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                this.navigateTo('settings');
             });
-        });
+        }
     }
 
     // 导航到指定页面

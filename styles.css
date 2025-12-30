@@ -861,6 +861,18 @@ header {
     display: none;
 }
 
+/* 小按钮样式 */
+.btn-small {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: var(--border-radius);
+}
+
+/* 移除底部导航栏后，调整笔记列表的padding */
+.notes-section {
+    padding-bottom: 20px !important;
+}
+
 /* 搜索框样式 - 新增功能 */
 .search-container {
     margin-bottom: 20px;
