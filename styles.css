@@ -116,8 +116,21 @@ header p {
     top: 10px;
     transform: none;
     background: var(--primary-color);
+    color: white;
     box-shadow: var(--shadow-sm);
     z-index: 1000;
+}
+
+/* 极简模式下返回按钮的悬停样式 */
+.minimal-header .back-btn:hover {
+    background: var(--primary-hover);
+    box-shadow: var(--shadow-md);
+}
+
+/* 极简模式下返回按钮的激活样式 */
+.minimal-header .back-btn:active {
+    transform: scale(0.95);
+    box-shadow: var(--shadow-sm);
 }
 
 /* 通用标题样式 */
@@ -267,35 +280,28 @@ h3 {
 }
 
 .status {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 12px 20px;
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    font-weight: 500;
+    color: var(--text-secondary);
+    padding: 8px 0;
+    font-size: 13px;
+    font-weight: 400;
     text-align: center;
-    box-shadow: var(--shadow-sm);
     transition: var(--transition);
 }
 
-.status:hover {
-    box-shadow: var(--shadow-md);
-}
-
 .status.error {
-    background-color: var(--error-color);
+    color: var(--error-color);
 }
 
 .status.success {
-    background-color: var(--success-color);
+    color: var(--success-color);
 }
 
 .status.info {
-    background-color: var(--info-color);
+    color: var(--info-color);
 }
 
 .status.warning {
-    background-color: var(--warning-color);
+    color: var(--warning-color);
 }
 
 /* 笔记列表区域样式 */
@@ -304,7 +310,7 @@ h3 {
 }
 
 .notes-list {
-    max-height: 350px;
+    max-height: calc(100vh - 200px); /* 动态计算高度，适配不同屏幕 */
     overflow-y: auto;
     background-color: var(--bg-primary);
     border-radius: var(--border-radius);
@@ -863,9 +869,25 @@ header {
 
 /* 小按钮样式 */
 .btn-small {
-    padding: 8px 16px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 13px;
     border-radius: var(--border-radius);
+    min-width: 60px;
+}
+
+/* 圆形图标按钮样式 */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    font-size: 14px;
+    border-radius: 50%;
+    min-width: auto;
+    flex: none; /* 防止按钮在flex容器中被拉伸 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 /* 移除底部导航栏后，调整笔记列表的padding */
@@ -924,6 +946,10 @@ header {
     cursor: pointer;
     transition: var(--transition);
     font-family: inherit;
+    height: 32px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
 }
 
 .sort-select:hover {

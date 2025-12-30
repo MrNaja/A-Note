@@ -108,7 +108,7 @@ class MobileNoteApp {
         const settingsBtn = document.getElementById('settingsBtn');
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => {
-                this.navigateTo('settings');
+                this.navigateTo('settings', true);
             });
         }
     }
@@ -182,35 +182,18 @@ class MobileNoteApp {
         const backBtn = document.getElementById('backBtn');
         if (!backBtn) return;
         
-        // 只有在笔记详情页显示返回按钮
-        if (pageName === 'noteDetail') {
+        // 在笔记详情页和设置页面显示返回按钮
+        if (pageName === 'noteDetail' || pageName === 'settings') {
             backBtn.style.display = 'flex';
         } else {
             backBtn.style.display = 'none';
         }
     }
 
-    // 更新页面标题
+    // 更新页面标题 - 由于HTML中没有对应的元素，简化此方法
     updatePageTitle(pageName) {
-        const pageTitle = document.getElementById('pageTitle');
-        const pageSubtitle = document.getElementById('pageSubtitle');
-        
-        if (!pageTitle || !pageSubtitle) return;
-        
-        switch (pageName) {
-            case 'notes':
-                pageTitle.textContent = 'A Note 手机版';
-                pageSubtitle.textContent = '通过Gitee Token同步笔记';
-                break;
-            case 'noteDetail':
-                pageTitle.textContent = '笔记详情';
-                pageSubtitle.textContent = '';
-                break;
-            case 'settings':
-                pageTitle.textContent = '设置';
-                pageSubtitle.textContent = '';
-                break;
-        }
+        // 此方法当前不需要实现，因为HTML中没有对应的pageTitle和pageSubtitle元素
+        // 可以根据需要添加页面标题更新逻辑
     }
 
     // 渲染应用
@@ -414,16 +397,8 @@ class MobileNoteApp {
             // 同步完成后，渲染笔记列表
             this.renderNotesList();
             
-            // 如果当前是设置页面，更新底部导航栏并切换到笔记页面
+            // 如果当前是设置页面，直接切换到笔记页面
             if (this.currentPage === 'settings') {
-                // 更新底部导航栏
-                const navItems = document.querySelectorAll('.bottom-nav-item');
-                navItems.forEach(navItem => navItem.classList.remove('active'));
-                const notesNavItem = document.querySelector('[data-page="notes"]');
-                if (notesNavItem) {
-                    notesNavItem.classList.add('active');
-                }
-                
                 // 切换到笔记页面
                 this.navigateTo('notes');
             }
