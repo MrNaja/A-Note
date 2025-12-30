@@ -356,7 +356,7 @@ h3 {
 /* 笔记列表 - 全屏样式 */
 .notes-section {
     margin-bottom: 0;
-    padding-bottom: 70px; /* 为底部导航栏留出空间 */
+    
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -696,56 +696,6 @@ h3 {
     }
 }
 
-/* 底部导航栏 - App化设计 */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 600px;
-    width: 100%;
-    background-color: var(--bg-primary);
-    border-top: 1px solid var(--border-color);
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
-    padding: 12px 20px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 999;
-    transition: var(--transition);
-}
-
-.bottom-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 16px;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: var(--transition);
-    color: var(--text-secondary);
-}
-
-.bottom-nav-item:hover {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-}
-
-.bottom-nav-item.active {
-    color: var(--primary-color);
-    background-color: var(--bg-secondary);
-}
-
-.bottom-nav-item-icon {
-    font-size: 20px;
-}
-
-.bottom-nav-item-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-}
 
 /* 页面容器样式 */
 main {
@@ -825,7 +775,7 @@ header {
 
 /* 添加页面底部间距，避免被底部导航栏遮挡 */
 .notes-section {
-    margin-bottom: 80px;
+    margin-bottom:80px;
 }
 
 /* 关于区域样式 */
