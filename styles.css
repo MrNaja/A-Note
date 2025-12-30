@@ -71,7 +71,10 @@ body {
 
 /* 页面内容区域 */
 .page-content {
-    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
     overflow-y: auto;
     flex: 1;
 }
@@ -323,6 +326,15 @@ h3 {
     line-height: 1.6;
 }
 
+/* 列表头部 - 搜索和排序 */
+.notes-section > div:first-child,
+.search-container {
+    padding: 16px 20px;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 10;
+}
+
 .empty-state::before {
     content: '📝';
     display: block;
@@ -335,13 +347,19 @@ h3 {
 .notes-section {
     margin-bottom: 0;
     padding-bottom: 70px; /* 为底部导航栏留出空间 */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-/* 笔记列表容器 - 全屏高度 */
+/* 笔记列表容器 - 占满剩余空间 */
 .notes-list {
     max-height: none;
-    height: calc(100vh - 70px); /* 全屏高度减去底部导航栏 */
+    flex: 1;
     overflow-y: auto;
+    background-color: var(--bg-primary);
+    min-height: 0; /* 解决flex容器中元素高度问题 */
 }
 
 /* 笔记项样式 - 仅显示标题 */
