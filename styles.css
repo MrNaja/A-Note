@@ -83,13 +83,13 @@ body {
 header {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
-    padding: 25px 20px;
+    padding: 5px 5x;
     text-align: center;
     box-shadow: var(--shadow-md);
 }
 
 header h1 {
-    font-size: 28px;
+    font-size: 1px;
     font-weight: 700;
     margin-bottom: 6px;
     letter-spacing: -0.5px;
@@ -107,7 +107,7 @@ header p {
     padding: 0;
     box-shadow: none;
     height: auto;
-    min-height: 50px;
+    min-height: 2px;
 }
 
 /* 极简模式下的返回按钮 */
