@@ -7,6 +7,7 @@ class MobileNoteApp {
         this.giteeToken = null;
         this.giteeRepo = null;
         this.mainViewScrollPosition = 0; // 记录主界面的滚动位置
+        this.viewHistory = []; // 记录视图历史
         
         this.initializeApp();
     }
@@ -16,6 +17,9 @@ class MobileNoteApp {
         this.loadSettings();
         this.loadNotes();
         this.showView('main');
+        
+        // 初始化浏览器历史记录
+        this.initializeHistory();
     }
 
 
@@ -59,7 +63,7 @@ class MobileNoteApp {
         });
     }
 
-    showView(viewName) {
+    showView(viewName, fromHistory = false) {
         // 保存当前主界面的滚动位置
         if (this.currentView === 'main') {
             this.mainViewScrollPosition = window.scrollY;
@@ -91,6 +95,19 @@ class MobileNoteApp {
             this.renderNotes();
         } else if (viewName === 'detail' && this.currentNote) {
             this.renderNoteDetail();
+        }
+        
+        // 管理浏览器历史记录（如果不是从历史记录触发的）
+        if (!fromHistory) {
+            if (viewName === 'main') {
+                // 返回主界面时，如果历史记录栈中有其他视图，则添加历史记录
+                if (this.viewHistory.length > 0 && this.viewHistory[this.viewHistory.length - 1] !== 'main') {
+                    this.pushToHistory(viewName);
+                }
+            } else {
+                // 切换到其他视图时添加历史记录
+                this.pushToHistory(viewName);
+            }
         }
     }
 
@@ -611,13 +628,6 @@ class MobileNoteApp {
         
         const container = document.getElementById('noteDetailContent');
         container.innerHTML = `
-            <div class="note-detail-header">
-                <h1>${this.escapeHtml(this.currentNote.title)}</h1>
-                <div class="note-meta">
-                    <span class="update-time">更新于: ${this.formatDate(this.currentNote.updatedAt)}</span>
-                    <span class="create-time">创建于: ${this.formatDate(this.currentNote.createdAt)}</span>
-                </div>
-            </div>
             <div class="note-content">
                 ${this.markdownToHtml(this.currentNote.content)}
             </div>
@@ -775,6 +785,37 @@ class MobileNoteApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new MobileNoteApp();
 });
+
+// 添加历史记录管理的方法
+MobileNoteApp.prototype.initializeHistory = function() {
+    // 监听浏览器历史记录变化
+    window.addEventListener('popstate', (event) => {
+        if (event.state && event.state.view) {
+            this.showView(event.state.view, true);
+        } else {
+            this.showView('main', true);
+        }
+    });
+};
+
+MobileNoteApp.prototype.pushToHistory = function(viewName) {
+    const state = { view: viewName };
+    const title = viewName === 'main' ? 'A-Note' : `A-Note - ${viewName}`;
+    const url = viewName === 'main' ? window.location.pathname : `#${viewName}`;
+    
+    window.history.pushState(state, title, url);
+    this.viewHistory.push(viewName);
+};
+
+MobileNoteApp.prototype.goBack = function() {
+    if (this.viewHistory.length > 1) {
+        this.viewHistory.pop(); // 移除当前视图
+        const previousView = this.viewHistory[this.viewHistory.length - 1];
+        this.showView(previousView, true);
+    } else {
+        this.showView('main', true);
+    }
+};
 
 // 添加消息样式
 const messageStyles = `

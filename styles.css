@@ -1,10 +1,14 @@
-/* 基础样式重置 */
+/* ================================================
+   基础样式重置 - 全局通用样式
+   ================================================ */
+/* 重置所有元素的默认边距和内边距 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* 页面主体样式 */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -14,115 +18,112 @@ body {
     overflow-x: hidden;
 }
 
-/* 视图切换 */
+/* ================================================
+   视图切换 - 主界面、搜索界面、设置界面、详情界面
+   ================================================ */
+/* 所有视图的基类，默认隐藏 */
 .view {
     display: none;
     min-height: 100vh;
     background: #f8f9fa;
 }
 
+/* 激活的视图显示 */
 .view.active {
     display: flex;
     flex-direction: column;
 }
 
-/* 头部样式 */
+/* ================================================
+   头部样式 - 所有页面的顶部导航栏
+   ================================================ */
+/* 主头部容器 */
 .header {
-    background: transparent;
+    background: #f8f9fa; /* 灰色背景 */
     color: #333;
-    padding: 1rem;
+    padding: 6px 10px; /* 调整上下间距为12px，左右为10px */
     position: sticky;
     top: 0;
     z-index: 100;
-}
-
-.header-content {
+    border-bottom: 1px solid #e9ecef; /* 添加底部边框 */
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
+    min-height: 40px; /* 确保头部有足够的高度 */
+    box-sizing: border-box;
 }
 
+/* 头部内容容器 - 包含标题和按钮 */
+.header-content {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin: 0; /* 移除边距 */
+}
+
+/* 应用标题样式 */
 .app-title {
-    font-size: 1.5rem;
+    font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.5px;
 }
 
-.icon-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    padding: 0.5rem;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
+/* ================================================
+   按钮样式 - 各种类型的按钮
+   ================================================ */
 
-.icon-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
+/* 文字按钮 - 带边框的文本按钮 */
 .text-btn {
     background: none;
-    border: 1px solid #e9ecef;
+    border: 2px solid #e9ecef;
     color: #333;
-    padding: 0.5rem 1rem;
+    padding: 8px 16px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 12px;
     font-weight: 500;
     transition: all 0.3s ease;
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
+/* 文字按钮悬停效果 */
 .text-btn:hover {
     background: rgba(0, 0, 0, 0.05);
     border-color: #d0d7de;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* 文字按钮焦点效果 */
 .text-btn:focus {
     outline: none;
     border-color: #4f46e5;
     box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
-.back-btn {
-    background: none;
-    border: none;
-    color: #333;
-    cursor: pointer;
-    padding: 0.5rem;
-    transition: transform 0.3s ease;
-    width: 0;
-    height: 0;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-    border-right: 12px solid #333;
-    border-left: none;
-}
+
 
 .back-btn:hover {
     transform: translateX(-2px);
     border-right-color: #666;
 }
 
+/* 头部间距元素 - 用于平衡左右布局 */
 .header-spacer {
-    width: 2.5rem;
+    width: 0;
+    display: none;
 }
 
-/* 头部操作按钮 */
+/* 头部操作按钮区域 - 包含设置、搜索等按钮 */
 .header-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 8px;
     align-items: center;
 }
 
-/* 搜索界面 */
+/* ================================================
+   搜索界面样式 - 覆盖层模式
+   ================================================ */
+/* 搜索覆盖层容器 */
 .search-overlay {
     position: fixed;
     top: 0;
@@ -136,98 +137,88 @@ body {
     max-width: 100%;
 }
 
-@media (min-width: 768px) {
-    .search-overlay {
-        left: 50%;
-        right: auto;
-        width: 100%;
-        max-width: 480px;
-        max-height: 800px;
-        transform: translateX(-50%);
-        border-radius: 24px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-        overflow: hidden;
-    }
-}
 
+
+/* 搜索界面显示状态 */
 .search-overlay.show {
     display: flex;
 }
 
+/* 搜索头部 - 包含标题和返回按钮 */
 .search-header {
-    background: transparent;
+    background: #f8f9fa; /* 灰色背景 */
     color: #333;
-    padding: 1rem;
-    display: flex;
+    padding: 8px 16px; /* 调整上下间距为12px，左右为16px */
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
+    gap: 8px;
     border-bottom: 1px solid #e9ecef;
+    min-height: 40px; /* 确保头部有足够的高度 */
+    box-sizing: border-box;
 }
 
-.search-header h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0;
-    color: #333;
-}
 
+
+/* 搜索头部按钮样式 */
 .search-header .text-btn {
-    margin-right: 0.5rem;
+    margin-right: 8px;
     min-width: 60px;
 }
 
+/* 设置和详情页面的头部按钮样式 */
 .settings-view .header-content .text-btn,
 #detailView .header-content .text-btn {
-    margin-right: 0.5rem;
+    margin-right: 8px;
     min-width: 60px;
 }
 
+/* 搜索内容区域 */
 .search-content {
     flex: 1;
-    padding: 1rem;
+    padding: 10px;
     overflow-y: auto;
     max-width: 100%;
 }
 
-@media (min-width: 768px) {
-    .search-content {
-        max-width: 480px;
-        margin: 0 auto;
-    }
-}
 
+
+/* 搜索输入框容器 */
 .search-input-container {
     position: relative;
-    margin-bottom: 1rem;
+    margin-bottom: 16px;
 }
 
+/* 搜索输入框 */
 .search-input-container .search-input {
     width: 100%;
-    padding: 1rem 3rem 1rem 1rem;
+    padding: 16px 48px 16px 16px;
     border: 2px solid #e9ecef;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 16px;
     background: #fafafa;
 }
 
+/* 清除搜索按钮 */
 .search-input-container .clear-search {
     position: absolute;
-    right: 1rem;
+    right: 16px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     color: #999;
-    font-size: 1.5rem;
+    font-size: 24px;
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 4px;
     border-radius: 50%;
 }
 
+/* 搜索结果列表 */
 .search-results {
     display: grid;
-    gap: 0.75rem;
-    padding: 0 1rem;
+    gap: 12px;
+    padding: 0 16px;
     max-height: calc(100vh - 200px);
     overflow-y: auto;
 }
@@ -235,7 +226,7 @@ body {
 .search-result-item {
     background: white;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 1px solid #e9ecef;
     cursor: pointer;
@@ -251,29 +242,29 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 0.5rem;
+    margin-bottom: 8px;
 }
 
 .result-title {
-    font-size: 1rem;
+    font-size: 16px;
     font-weight: 600;
     color: #2d3748;
     margin: 0;
     flex: 1;
-    margin-right: 1rem;
+    margin-right: 16px;
 }
 
 .result-date {
-    font-size: 0.75rem;
+    font-size: 12px;
     color: #718096;
     white-space: nowrap;
 }
 
 .result-description {
-    font-size: 0.875rem;
+    font-size: 14px;
     color: #4a5568;
     line-height: 1.4;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 8px 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -283,81 +274,89 @@ body {
 .result-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem;
+    gap: 4px;
 }
 
 .search-empty {
     text-align: center;
-    padding: 3rem 1rem;
+    padding: 48px 16px;
     color: #718096;
 }
 
 .search-empty .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 48px;
+    margin-bottom: 16px;
 }
 
 .search-empty h3 {
-    font-size: 1.125rem;
-    margin: 0 0 0.5rem 0;
+    font-size: 18px;
+    margin: 0 0 8px 0;
     color: #4a5568;
 }
 
 .search-empty p {
-    font-size: 0.875rem;
+    font-size: 14px;
     margin: 0;
 }
 
 
 
-/* 控制区域 */
+/* ================================================
+   主界面控制区域 - 搜索和排序控件
+   ================================================ */
+/* 主界面控制区域容器 */
 .controls {
     display: flex;
-    gap: 0.5rem;
+    gap: 8px;
     align-items: center;
 }
 
+/* 搜索框容器 */
 .search-container {
     position: relative;
     flex: 1;
 }
 
+/* 主界面搜索输入框 */
 .search-input {
     width: 100%;
-    padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+    padding: 12px 40px 12px 40px;
     border: none;
     border-radius: 25px;
     background: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
+    font-size: 14.4px;
     transition: all 0.3s ease;
 }
 
+/* 搜索输入框焦点状态 */
 .search-input:focus {
     outline: none;
     background: white;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
+/* 搜索图标 */
 .search-icon {
     position: absolute;
-    left: 1rem;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
     color: #666;
     pointer-events: none;
 }
 
+/* 清除搜索按钮 */
 .clear-search {
     position: absolute;
-    right: 1rem;
+    right: 16px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     color: #999;
-    font-size: 1.2rem;
+    font-size: 19.2px;
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 4px;
     border-radius: 50%;
     transition: all 0.3s ease;
 }
@@ -368,11 +367,11 @@ body {
 }
 
 .sort-select {
-    padding: 0.75rem;
+    padding: 12px;
     border: none;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.9);
-    font-size: 0.85rem;
+    font-size: 13.6px;
     min-width: 120px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -384,26 +383,30 @@ body {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
-/* 主内容区域 */
+/* ================================================
+   主内容区域 - 笔记列表容器
+   ================================================ */
+/* 主内容区域容器 - 包含笔记列表 */
 .main-content {
     flex: 1;
-    padding: 1rem;
+    padding: 6px 10px 10px 10px; /* 顶部添加8px间距，避免与头部边框重合 */
     overflow-y: auto;
 }
 
-
-
-/* 笔记容器 */
+/* ================================================
+   笔记列表区域 - 笔记卡片容器
+   ================================================ */
+/* 笔记网格容器 - 主界面的笔记列表布局 */
 .notes-container {
     display: grid;
-    gap: 0.75rem;
+    gap: 5px;
 }
 
-/* 笔记项 */
+/* 笔记项 - 单个笔记卡片样式 */
 .note-item {
     background: white;
-    border-radius: 16px;
-    padding: 1.25rem;
+    border-radius: 8px;
+    padding: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
     border: 1px solid #f0f0f0;
@@ -412,36 +415,25 @@ body {
     overflow: hidden;
 }
 
-.note-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to bottom, #4f46e5, #7c3aed);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
+/* 笔记项悬停效果 */
 .note-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.note-item:hover::before {
-    opacity: 1;
-}
-
+/* 笔记内容主容器 - 包含笔记正文和元数据 */
 .note-content-main {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1px;
+    height: 100%;
+    min-height: 60px;
 }
 
+/* 笔记正文内容 - 主界面显示的文本内容 */
 .note-item .note-content {
     color: #333;
-    font-size: 1rem;
+    font-size: 16px;
     line-height: 1.5;
     display: -webkit-box;
     display: -moz-box;
@@ -454,74 +446,93 @@ body {
     box-orient: vertical;
     overflow: hidden;
     margin: 0;
+    flex: 1;
+    min-height: 72px; /* 确保至少有3行的高度 (16px * 1.5 * 3) */
 }
 
-.note-meta {
+/* 笔记元数据区域 - 包含日期和标签 */
+.note-item .note-meta {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
-    font-size: 0.8rem;
+    font-size: 12.8px;
     color: #999;
+    margin-top: auto; /* 自动边距，根据文字行数调整位置 */
+    padding-top: 4px;
 }
 
+/* 笔记日期 - 显示创建时间的文本样式 */
 .note-date {
-    font-size: 0.8rem;
-    color: #999;
+    font-size: 11px;
+    color: white;
+    background-color: #999;
+    padding: 1px 6px;
+    border-radius: 8px;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
+/* 笔记标签容器 - 包含多个标签的布局 */
 .note-tags {
     display: flex;
-    gap: 0.25rem;
+    gap: 4px;
     flex-wrap: wrap;
 }
 
+/* 单个标签样式 - 用于分类和标记笔记 */
 .tag {
     background: #f0f0f0;
     color: #666;
-    padding: 0.2rem 0.5rem;
+    padding: 3.2px 8px;
     border-radius: 12px;
-    font-size: 0.75rem;
+    font-size: 12px;
 }
 
+/* 笔记来源标识 - 显示数据来源的样式 */
 .note-source {
-    font-size: 0.75rem;
+    font-size: 12px;
     color: #4f46e5;
     font-weight: 500;
 }
 
-/* 空状态 */
+/* ================================================
+   空状态 - 无数据时的显示界面
+   ================================================ */
+/* 空状态容器 - 当没有笔记数据时显示 */
 .empty-state {
     text-align: center;
-    padding: 3rem 1rem;
+    padding: 48px 16px;
     color: #666;
 }
 
+/* 空状态图标 - 无数据时的图标样式 */
 .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
+    font-size: 64px;
+    margin-bottom: 16px;
     opacity: 0.5;
 }
 
+/* 空状态标题 - 无数据时的标题文本 */
 .empty-state h3 {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    font-size: 20px;
+    margin-bottom: 8px;
     color: #333;
 }
 
+/* 空状态描述 - 无数据时的说明文本 */
 .empty-state p {
-    margin-bottom: 1.5rem;
+    margin-bottom: 24px;
     line-height: 1.6;
 }
 
+/* 同步按钮 - 用于手动同步数据的按钮 */
 .sync-btn {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     color: white;
     border: none;
-    padding: 0.75rem 1.5rem;
+    padding: 12px 24px;
     border-radius: 25px;
-    font-size: 1rem;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -533,52 +544,61 @@ body {
     box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
 }
 
-/* 设置页面 */
+/* ================================================
+   设置页面 - 应用配置界面
+   ================================================ */
+/* 设置页面内容区域 */
 .settings-content {
     flex: 1;
-    padding: 1rem;
+    padding: 16px;
     overflow-y: auto;
 }
 
+/* 设置区块 - 单个设置区域的容器 */
 .settings-section {
     background: white;
     border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    padding: 24px;
+    margin-bottom: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+/* 设置区块标题 */
 .settings-section h3 {
-    font-size: 1.1rem;
+    font-size: 17.6px;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 16px;
     color: #333;
     border-bottom: 2px solid #f0f0f0;
-    padding-bottom: 0.5rem;
+    padding-bottom: 8px;
 }
 
+/* 表单组 - 单个输入字段的容器 */
 .form-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 20px;
 }
 
+/* 表单标签 - 输入字段的标签文本 */
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 8px;
     font-weight: 500;
     color: #555;
-    font-size: 0.95rem;
+    font-size: 15.2px;
 }
 
+/* 表单输入框 - 设置页面的文本输入字段 */
 .form-input {
     width: 100%;
-    padding: 0.75rem;
+    padding: 12px;
     border: 2px solid #e9ecef;
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: 15.2px;
     transition: all 0.3s ease;
     background: #fafafa;
 }
 
+/* 表单输入框焦点状态 */
 .form-input:focus {
     outline: none;
     border-color: #4f46e5;
@@ -586,13 +606,15 @@ body {
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
+/* 表单帮助文本 - 输入字段下方的说明文字 */
 .form-help {
     display: block;
-    margin-top: 0.25rem;
-    font-size: 0.85rem;
+    margin-top: 4px;
+    font-size: 13.6px;
     color: #666;
 }
 
+/* 表单帮助文本中的链接 */
 .form-help a {
     color: #4f46e5;
     text-decoration: none;
@@ -602,126 +624,117 @@ body {
     text-decoration: underline;
 }
 
+/* 操作按钮容器 - 设置页面的按钮组 */
 .action-buttons {
     display: grid;
-    gap: 0.75rem;
+    gap: 12px;
 }
 
+/* 操作按钮 - 通用按钮样式 */
 .action-btn {
-    padding: 0.75rem 1rem;
+    padding: 12px 16px;
     border: none;
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: 15.2px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
 }
 
+/* 主要操作按钮 - 重要操作的按钮样式 */
 .action-btn.primary {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     color: white;
 }
 
+/* 次要操作按钮 - 次要操作的按钮样式 */
 .action-btn.secondary {
     background: #f8f9fa;
     color: #666;
     border: 2px solid #e9ecef;
 }
 
-.action-btn {
+/* 常规操作按钮 - 普通操作的按钮样式 */
+.action-btn.normal {
     background: #e0e7ff;
     color: #4f46e5;
     border: 2px solid #c7d2fe;
 }
 
+/* 危险操作按钮 - 删除等危险操作的按钮样式 */
 .action-btn.danger {
     background: #fee2e2;
     color: #dc2626;
     border: 2px solid #fecaca;
 }
 
+/* 操作按钮悬停效果 */
 .action-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* 操作按钮焦点效果 */
 .action-btn:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
+/* 信息项 - 设置页面中的信息显示行 */
 .info-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 12px 0;
     border-bottom: 1px solid #f0f0f0;
 }
 
+/* 最后一个信息项 - 移除底部边框 */
 .info-item:last-child {
     border-bottom: none;
 }
 
+/* 信息项标签 - 信息名称的样式 */
 .info-item span:first-child {
     font-weight: 500;
     color: #555;
 }
 
+/* 信息项值 - 信息内容的样式 */
 .info-item span:last-child {
     color: #666;
-    font-size: 0.9rem;
+    font-size: 14.4px;
 }
 
-/* 详情页面 */
+/* ================================================
+   详情页面 - 笔记详情显示界面
+   ================================================ */
+/* 详情页面内容区域 */
 .detail-content {
     flex: 1;
-    padding: 1rem;
+    padding: 10px;
     overflow-y: auto;
 }
 
-.detail-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    text-align: center;
-    flex: 1;
-}
 
+
+/* 笔记详情内容容器 - 包含笔记标题和正文 */
 .note-detail-content {
     background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
+    border-radius: 8px;
+    padding: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    line-height: 1.8;
+    line-height: 1.5;
 }
 
-.note-detail-header {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #f0f0f0;
-}
 
-.note-detail-header h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 0.5rem;
-    line-height: 1.4;
-}
 
-.note-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: #666;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
+/* 详情页面的笔记正文 - 完整显示笔记内容 */
 .note-detail-content .note-content {
-    font-size: 1rem;
+    font-size: 16px;
     color: #333;
-    white-space: pre-wrap;
+    white-space: normal;
     word-wrap: break-word;
     display: block;
     overflow: visible;
@@ -730,26 +743,31 @@ body {
     line-clamp: none;
 }
 
+/* 笔记内容中的引用块样式 */
 .note-content blockquote {
     border-left: 4px solid #4f46e5;
-    padding-left: 1rem;
-    margin: 1rem 0;
+    padding-left: 16px;
+    margin: 16px 0;
     color: #666;
     font-style: italic;
 }
 
+/* 笔记内容中的水平分割线 */
 .note-content hr {
     border: none;
     border-top: 1px solid #e9ecef;
-    margin: 1rem 0;
+    margin: 16px 0;
 }
 
-/* 通知组件 */
+/* ================================================
+   通知组件 - 用户操作反馈提示
+   ================================================ */
+/* 通知容器 - 悬浮在页面顶部的提示框 */
 .notification {
     position: fixed;
-    top: 1rem;
-    right: 1rem;
-    padding: 1rem 1.5rem;
+    top: 16px;
+    right: 16px;
+    padding: 16px 24px;
     border-radius: 12px;
     color: white;
     font-weight: 500;
@@ -758,29 +776,39 @@ body {
     transition: transform 0.3s ease;
     max-width: 300px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: none; /* 默认隐藏 */
 }
 
+/* 通知显示状态 */
 .notification.show {
     transform: translateX(0);
+    display: block; /* 显示通知 */
 }
 
+/* 成功通知 - 绿色背景 */
 .notification.success {
     background: linear-gradient(135deg, #10b981, #059669);
 }
 
+/* 错误通知 - 红色背景 */
 .notification.error {
     background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+/* 信息通知 - 蓝色背景 */
 .notification.info {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
 
+/* 警告通知 - 橙色背景 */
 .notification.warning {
     background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-/* 加载动画 */
+/* ================================================
+   加载动画 - 异步操作时的等待提示
+   ================================================ */
+/* 加载动画 - 旋转的圆形加载指示器 */
 .loading {
     display: inline-block;
     width: 20px;
@@ -793,70 +821,18 @@ body {
     -moz-animation: spin 1s ease-in-out infinite;
 }
 
+/* 加载动画关键帧 - 360度旋转 */
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
+/* Webkit浏览器兼容的加载动画关键帧 */
 @-webkit-keyframes spin {
     to { -webkit-transform: rotate(360deg); }
 }
 
+/* Firefox浏览器兼容的加载动画关键帧 */
 @-moz-keyframes spin {
     to { -moz-transform: rotate(360deg); }
 }
 
-/* 响应式设计 */
-@media (max-width: 480px) {
-    .header {
-        padding: 0.75rem;
-    }
-    
-    .app-title {
-        font-size: 1.3rem;
-    }
-    
-    .controls {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .sort-select {
-        width: 100%;
-    }
-    
-    .main-content {
-        padding: 0.75rem;
-    }
-    
-    .note-item {
-        padding: 1rem;
-    }
-    
-    .settings-section {
-        padding: 1rem;
-    }
-    
-    .notification {
-        right: 0.5rem;
-        left: 0.5rem;
-        max-width: none;
-    }
-}
-
-@media (min-width: 768px) {
-    body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        padding: 1rem;
-    }
-    
-    .view.active {
-        max-width: 480px;
-        max-height: 800px;
-        border-radius: 24px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-        overflow: hidden;
-    }
-}
