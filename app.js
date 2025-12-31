@@ -233,10 +233,10 @@ class MobileNoteApp {
             console.log('仓库路径:', this.giteeRepo);
             console.log('Token长度:', this.giteeToken ? this.giteeToken.length : 'null');
             
-            // 递归获取所有笔记文件
-            console.log('开始递归查找所有笔记文件...');
-            const files = await this.fetchAllMarkdownFiles();
-            console.log('获取到的笔记文件总数:', files.length);
+            // 递归获取所有JSON笔记文件
+            console.log('开始递归查找所有JSON笔记文件...');
+            const files = await this.fetchAllJsonFiles();
+            console.log('获取到的JSON笔记文件总数:', files.length);
             console.log('文件详情:', files.map(f => ({name: f.name, type: f.type, path: f.path})));
             
             // 下载并解析笔记
@@ -252,12 +252,12 @@ class MobileNoteApp {
                     
                     let note = null;
                     
-                    if (file.name.endsWith('.md')) {
-                        // 处理Markdown文件
-                        note = this.parseNoteFromContent(content, file);
-                    } else if (file.name === 'data.json') {
+                    if (file.name === 'data.json') {
                         // 处理JSON文件
                         note = this.parseNotesFromJson(content, file);
+                    } else {
+                        console.log('❌ 不支持的文件格式:', file.name);
+                        continue;
                     }
                     
                     if (note) {
@@ -278,7 +278,7 @@ class MobileNoteApp {
             }
             
             console.log('=== 同步统计 ===');
-            console.log('发现的Markdown文件数:', files.length);
+            console.log('发现的JSON文件数:', files.length);
             console.log('成功解析笔记数:', newNotes.length);
             
             // 更新笔记列表
@@ -333,8 +333,8 @@ class MobileNoteApp {
         return files;
     }
 
-    async fetchAllMarkdownFiles(repoPath = this.giteeRepo, token = this.giteeToken, path = '') {
-         console.log('递归查找笔记文件，路径:', path);
+    async fetchAllJsonFiles(repoPath = this.giteeRepo, token = this.giteeToken, path = '') {
+         console.log('递归查找JSON笔记文件，路径:', path);
          const allFiles = [];
          
          try {
@@ -344,11 +344,11 @@ class MobileNoteApp {
                  if (file.type === 'dir') {
                      // 如果是目录，递归查找
                      console.log('发现子目录:', file.path);
-                     const subFiles = await this.fetchAllMarkdownFiles(repoPath, token, file.path);
+                     const subFiles = await this.fetchAllJsonFiles(repoPath, token, file.path);
                      allFiles.push(...subFiles);
-                 } else if (file.type === 'file' && (file.name.endsWith('.md') || file.name === 'data.json')) {
-                     // 如果是Markdown文件或data.json文件，添加到结果中
-                     console.log('发现笔记文件:', file.path);
+                 } else if (file.type === 'file' && file.name === 'data.json') {
+                     // 如果是data.json文件，添加到结果中
+                     console.log('发现JSON笔记文件:', file.path);
                      allFiles.push(file);
                  }
              }
@@ -356,7 +356,7 @@ class MobileNoteApp {
              console.error('递归查找文件失败:', error);
          }
          
-         console.log('路径', path, '下的笔记文件数:', allFiles.length);
+         console.log('路径', path, '下的JSON笔记文件数:', allFiles.length);
          return allFiles;
      }
 
@@ -385,41 +385,6 @@ class MobileNoteApp {
             bytes[i] = binary.charCodeAt(i);
         }
         return new TextDecoder('utf-8').decode(bytes);
-    }
-
-    parseNoteFromContent(content, file) {
-        try {
-            // 解析Markdown内容，提取标题和元数据
-            const lines = content.split('\n');
-            let title = file.name.replace('.md', '');
-            let description = '';
-            let tags = [];
-            
-            // 尝试从内容中提取标题和描述
-            for (let i = 0; i < Math.min(lines.length, 5); i++) {
-                const line = lines[i].trim();
-                if (line.startsWith('# ')) {
-                    title = line.substring(2).trim();
-                } else if (line && !description) {
-                    description = line.length > 100 ? line.substring(0, 100) + '...' : line;
-                }
-            }
-            
-            return {
-                id: file.sha || file.path,
-                title: title,
-                description: description || '无描述',
-                content: content,
-                tags: tags,
-                createdAt: file.created_at || new Date().toISOString(),
-                updatedAt: file.updated_at || new Date().toISOString(),
-                source: 'gitee',
-                filePath: file.path
-            };
-        } catch (error) {
-            console.error('解析笔记失败:', error);
-            return null;
-        }
     }
 
     parseNotesFromJson(content, file) {
@@ -540,17 +505,16 @@ class MobileNoteApp {
         
         container.innerHTML = this.filteredNotes.map(note => `
             <div class="note-item" data-note-id="${note.id}">
-                <div class="note-header">
-                    <h3 class="note-title">${this.escapeHtml(note.title)}</h3>
-                    <span class="note-date">${this.formatDate(note.createdAt)}</span>
-                </div>
-                <p class="note-description">${this.escapeHtml(note.description)}</p>
-                <div class="note-footer">
-                    ${note.tags.length > 0 ? `
-                        <div class="note-tags">
-                            ${note.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
-                        </div>
-                    ` : ''}
+                <div class="note-content-main">
+                    <p class="note-content">${this.escapeHtml(note.description)}</p>
+                    <div class="note-meta">
+                        <span class="note-date">${this.formatDate(note.createdAt)}</span>
+                        ${note.tags.length > 0 ? `
+                            <div class="note-tags">
+                                ${note.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -643,7 +607,7 @@ class MobileNoteApp {
     }
 
     markdownToHtml(markdown) {
-        // 简单的Markdown到HTML转换
+        // 将文本内容转换为HTML格式（支持Markdown语法）
         return markdown
             .replace(/^# (.*$)/gm, '<h1>$1</h1>')
             .replace(/^## (.*$)/gm, '<h2>$1</h2>')
