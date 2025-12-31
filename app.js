@@ -111,7 +111,7 @@ class MobileNoteApp {
             const repos = await this.fetchUserRepositories(token);
             
             // 查找包含A-Note备份的仓库
-            const noteRepo = this.findNoteRepository(repos);
+            const noteRepo = await this.findNoteRepository(repos, token);
             
             if (noteRepo) {
                 this.giteeRepo = noteRepo.full_name;
@@ -127,21 +127,39 @@ class MobileNoteApp {
     }
 
     async fetchUserRepositories(token) {
-        const response = await fetch('https://gitee.com/api/v5/user/repos', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+        try {
+            // 确保Token是有效的ASCII字符串
+            const cleanToken = this.cleanToken(token);
+            console.log('清理后的Token长度:', cleanToken.length);
+            
+            const response = await fetch('https://gitee.com/api/v5/user/repos', {
+                headers: {
+                    'Authorization': `Bearer ${cleanToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Gitee API错误:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            
+            const repos = await response.json();
+            console.log('获取到的仓库数量:', repos.length);
+            return repos;
+        } catch (error) {
+            console.error('获取仓库列表失败:', error);
+            throw error;
         }
-        
-        return await response.json();
     }
 
-    findNoteRepository(repos) {
+    cleanToken(token) {
+        // 移除可能的空格和特殊字符
+        return token.trim().replace(/[^\x20-\x7E]/g, '');
+    }
+
+    async findNoteRepository(repos, token) {
         // 优先查找包含A-Note相关关键词的仓库
         const keywords = ['a-note', 'anote', 'note-backup', 'notes-backup', '笔记备份'];
         
@@ -157,7 +175,7 @@ class MobileNoteApp {
             }
             
             // 检查仓库是否包含notes文件夹
-            if (this.checkRepositoryHasNotesFolder(repo, repos)) {
+            if (await this.checkRepositoryHasNotesFolder(repo, token)) {
                 return repo;
             }
         }
@@ -228,10 +246,13 @@ class MobileNoteApp {
             throw new Error('缺少仓库路径或Token');
         }
         
+        // 确保Token是有效的ASCII字符串
+        const cleanToken = this.cleanToken(token);
+        
         const url = `https://gitee.com/api/v5/repos/${repoPath}/contents`;
         const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${cleanToken}`,
                 'Content-Type': 'application/json'
             }
         });
