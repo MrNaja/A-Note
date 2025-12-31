@@ -4,7 +4,6 @@ class MobileNoteApp {
         this.filteredNotes = [];
         this.currentNote = null;
         this.currentView = 'main';
-        this.sortBy = 'updated';
         this.giteeToken = null;
         this.giteeRepo = null;
         
@@ -18,6 +17,8 @@ class MobileNoteApp {
         this.showView('main');
     }
 
+
+
     bindEvents() {
         // 视图切换
         document.getElementById('settingsBtn').addEventListener('click', () => this.showView('settings'));
@@ -25,6 +26,9 @@ class MobileNoteApp {
         document.getElementById('backFromDetailBtn').addEventListener('click', () => this.showView('main'));
         
         // 搜索功能
+        document.getElementById('searchBtn').addEventListener('click', () => this.showSearchView());
+        document.getElementById('closeSearchBtn').addEventListener('click', () => this.hideSearchView());
+        
         const searchInput = document.getElementById('searchInput');
         searchInput.addEventListener('input', (e) => this.filterNotes(e.target.value));
         document.querySelector('.clear-search').addEventListener('click', () => {
@@ -32,28 +36,24 @@ class MobileNoteApp {
             this.filterNotes('');
         });
 
-        // 排序功能
-        document.getElementById('sortSelect').addEventListener('change', (e) => {
-            this.sortBy = e.target.value;
-            this.sortNotes();
-            this.renderNotes();
-        });
+        // 排序功能已简化，只按创建时间排序
 
         // 设置保存
         document.getElementById('saveSettingsBtn').addEventListener('click', () => this.saveSettings());
         
-        // 同步功能
-        document.getElementById('syncBtn').addEventListener('click', () => this.syncWithGitee());
+        // 移除配置
+        document.getElementById('removeConfigBtn').addEventListener('click', () => this.removeConfig());
         
-        // 刷新功能
-        document.getElementById('refreshBtn').addEventListener('click', () => this.refreshNotes());
+        // 同步功能（仅在设置页面）
         
-        // 自动检测仓库
-        document.getElementById('detectRepoBtn').addEventListener('click', () => this.detectRepository());
+        // Token输入时自动检测仓库（简化版，只在保存时检测）
         document.getElementById('giteeToken').addEventListener('input', (e) => {
             if (e.target.value && e.target.value.length > 10) {
-                // 延迟自动检测
-                setTimeout(() => this.detectRepository(), 1000);
+                // 显示提示信息，表示可以保存配置来自动检测仓库
+                const repoInput = document.getElementById('giteeRepo');
+                if (!repoInput.value) {
+                    repoInput.placeholder = '输入Token后点击保存自动检测';
+                }
             }
         });
     }
@@ -76,6 +76,22 @@ class MobileNoteApp {
         }
     }
 
+    // 搜索界面相关方法
+    showSearchView() {
+        document.getElementById('searchView').classList.add('show');
+        document.getElementById('searchInput').focus();
+    }
+
+    hideSearchView() {
+        document.getElementById('searchView').classList.remove('show');
+        document.getElementById('searchInput').value = '';
+        this.filterNotes('');
+    }
+
+    // 排序功能已简化，只按创建时间排序
+
+    // 排序功能已简化，只按创建时间排序
+
     async loadNotes() {
         try {
             // 首先尝试从本地存储加载
@@ -87,9 +103,10 @@ class MobileNoteApp {
                 this.renderNotes();
             }
             
-            // 如果有Gitee配置，尝试同步
+            // 不再自动同步，只在用户点击同步按钮时同步
+            // 如果有Gitee配置，只显示同步提示
             if (this.giteeToken && this.giteeRepo) {
-                await this.syncWithGitee();
+                console.log('Gitee配置已加载，等待用户手动同步');
             }
         } catch (error) {
             console.error('加载笔记失败:', error);
@@ -100,7 +117,7 @@ class MobileNoteApp {
     async detectRepository() {
         const token = document.getElementById('giteeToken').value;
         if (!token) {
-            this.showMessage('请输入Gitee Token', 'warning');
+            this.showMessage('请输入Access Token', 'warning');
             return;
         }
 
@@ -195,7 +212,7 @@ class MobileNoteApp {
 
     async syncWithGitee() {
         if (!this.giteeToken) {
-            this.showMessage('请先配置Gitee Token', 'warning');
+            this.showMessage('请先配置Access Token', 'warning');
             this.showView('settings');
             return;
         }
@@ -204,7 +221,7 @@ class MobileNoteApp {
         if (!this.giteeRepo) {
             await this.detectRepository();
             if (!this.giteeRepo) {
-                this.showMessage('请先配置Gitee仓库', 'warning');
+                this.showMessage('请先配置仓库', 'warning');
                 return;
             }
         }
@@ -212,20 +229,57 @@ class MobileNoteApp {
         try {
             this.showMessage('正在同步...', 'info');
             
-            // 获取仓库文件列表
-            const files = await this.fetchGiteeFiles();
+            console.log('=== 开始同步 ===');
+            console.log('仓库路径:', this.giteeRepo);
+            console.log('Token长度:', this.giteeToken ? this.giteeToken.length : 'null');
+            
+            // 递归获取所有笔记文件
+            console.log('开始递归查找所有笔记文件...');
+            const files = await this.fetchAllMarkdownFiles();
+            console.log('获取到的笔记文件总数:', files.length);
+            console.log('文件详情:', files.map(f => ({name: f.name, type: f.type, path: f.path})));
             
             // 下载并解析笔记
             const newNotes = [];
+            
             for (const file of files) {
-                if (file.name.endsWith('.md')) {
+                console.log(`处理笔记文件 (${newNotes.length + 1}/${files.length}):`, file.name, '路径:', file.path);
+                
+                try {
+                    console.log('正在获取文件内容...');
                     const content = await this.fetchGiteeFileContent(file.path);
-                    const note = this.parseNoteFromContent(content, file);
-                    if (note) {
-                        newNotes.push(note);
+                    console.log('文件内容长度:', content.length);
+                    
+                    let note = null;
+                    
+                    if (file.name.endsWith('.md')) {
+                        // 处理Markdown文件
+                        note = this.parseNoteFromContent(content, file);
+                    } else if (file.name === 'data.json') {
+                        // 处理JSON文件
+                        note = this.parseNotesFromJson(content, file);
                     }
+                    
+                    if (note) {
+                        if (Array.isArray(note)) {
+                            // JSON文件可能返回多个笔记
+                            newNotes.push(...note);
+                            console.log(`✅ 成功解析 ${note.length} 条笔记`);
+                        } else {
+                            newNotes.push(note);
+                            console.log('✅ 成功解析笔记:', note.title);
+                        }
+                    } else {
+                        console.log('❌ 解析笔记失败，返回null');
+                    }
+                } catch (error) {
+                    console.error('❌ 处理文件失败:', file.name, error);
                 }
             }
+            
+            console.log('=== 同步统计 ===');
+            console.log('发现的Markdown文件数:', files.length);
+            console.log('成功解析笔记数:', newNotes.length);
             
             // 更新笔记列表
             this.notes = newNotes;
@@ -234,14 +288,21 @@ class MobileNoteApp {
             this.saveNotesToLocal();
             this.renderNotes();
             
+            console.log('最终笔记列表:', newNotes.map(n => n.title));
+            
             this.showMessage(`同步成功，共${newNotes.length}条笔记`, 'success');
+            
+            // 同步完成后自动返回主界面显示笔记
+            setTimeout(() => {
+                this.showView('main');
+            }, 1000);
         } catch (error) {
-            console.error('Gitee同步失败:', error);
+            console.error('❌ Gitee同步失败:', error);
             this.showMessage('同步失败: ' + error.message, 'error');
         }
     }
 
-    async fetchGiteeFiles(repoPath = this.giteeRepo, token = this.giteeToken) {
+    async fetchGiteeFiles(repoPath = this.giteeRepo, token = this.giteeToken, path = '') {
         if (!repoPath || !token) {
             throw new Error('缺少仓库路径或Token');
         }
@@ -249,7 +310,9 @@ class MobileNoteApp {
         // 确保Token是有效的ASCII字符串
         const cleanToken = this.cleanToken(token);
         
-        const url = `https://gitee.com/api/v5/repos/${repoPath}/contents`;
+        const url = `https://gitee.com/api/v5/repos/${repoPath}/contents${path ? '/' + path : ''}`;
+        console.log('获取文件列表:', url);
+        
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${cleanToken}`,
@@ -258,11 +321,44 @@ class MobileNoteApp {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('获取文件列表失败:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         
-        return await response.json();
+        const files = await response.json();
+        console.log('获取到的文件数量:', files.length);
+        console.log('文件列表:', files.map(f => ({name: f.name, type: f.type, path: f.path})));
+        
+        return files;
     }
+
+    async fetchAllMarkdownFiles(repoPath = this.giteeRepo, token = this.giteeToken, path = '') {
+         console.log('递归查找笔记文件，路径:', path);
+         const allFiles = [];
+         
+         try {
+             const files = await this.fetchGiteeFiles(repoPath, token, path);
+             
+             for (const file of files) {
+                 if (file.type === 'dir') {
+                     // 如果是目录，递归查找
+                     console.log('发现子目录:', file.path);
+                     const subFiles = await this.fetchAllMarkdownFiles(repoPath, token, file.path);
+                     allFiles.push(...subFiles);
+                 } else if (file.type === 'file' && (file.name.endsWith('.md') || file.name === 'data.json')) {
+                     // 如果是Markdown文件或data.json文件，添加到结果中
+                     console.log('发现笔记文件:', file.path);
+                     allFiles.push(file);
+                 }
+             }
+         } catch (error) {
+             console.error('递归查找文件失败:', error);
+         }
+         
+         console.log('路径', path, '下的笔记文件数:', allFiles.length);
+         return allFiles;
+     }
 
     async fetchGiteeFileContent(filePath) {
         const url = `https://gitee.com/api/v5/repos/${this.giteeRepo}/contents/${encodeURIComponent(filePath)}`;
@@ -278,7 +374,17 @@ class MobileNoteApp {
         }
         
         const data = await response.json();
-        return atob(data.content); // Base64解码
+        return this.decodeBase64UTF8(data.content); // 使用UTF-8安全的Base64解码
+    }
+
+    decodeBase64UTF8(base64) {
+        // 将Base64字符串转换为UTF-8字符串
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return new TextDecoder('utf-8').decode(bytes);
     }
 
     parseNoteFromContent(content, file) {
@@ -316,6 +422,71 @@ class MobileNoteApp {
         }
     }
 
+    parseNotesFromJson(content, file) {
+        try {
+            console.log('开始解析JSON格式的笔记数据...');
+            const data = JSON.parse(content);
+            console.log('JSON数据结构:', Object.keys(data));
+            
+            const notes = [];
+            
+            // 处理不同的JSON格式
+            if (Array.isArray(data)) {
+                // 格式1: 笔记数组
+                console.log('发现笔记数组，数量:', data.length);
+                for (const noteData of data) {
+                    const note = this.createNoteFromJson(noteData, file);
+                    if (note) notes.push(note);
+                }
+            } else if (data.notes && Array.isArray(data.notes)) {
+                // 格式2: 包含notes字段的对象
+                console.log('发现notes字段，数量:', data.notes.length);
+                for (const noteData of data.notes) {
+                    const note = this.createNoteFromJson(noteData, file);
+                    if (note) notes.push(note);
+                }
+            } else if (typeof data === 'object') {
+                // 格式3: 单个笔记对象
+                console.log('发现单个笔记对象');
+                const note = this.createNoteFromJson(data, file);
+                if (note) notes.push(note);
+            }
+            
+            console.log('从JSON解析出的笔记数量:', notes.length);
+            return notes.length > 0 ? notes : null;
+        } catch (error) {
+            console.error('解析JSON笔记失败:', error);
+            return null;
+        }
+    }
+
+    createNoteFromJson(noteData, file) {
+        try {
+            // 提取笔记信息
+            const title = noteData.title || noteData.name || '未命名笔记';
+            const content = noteData.content || noteData.text || '';
+            const description = noteData.description || content.substring(0, 100) + (content.length > 100 ? '...' : '');
+            const tags = Array.isArray(noteData.tags) ? noteData.tags : [];
+            const createdAt = noteData.createdAt || noteData.created_at || file.created_at || new Date().toISOString();
+            const updatedAt = noteData.updatedAt || noteData.updated_at || file.updated_at || new Date().toISOString();
+            
+            return {
+                id: noteData.id || file.sha + '-' + Date.now(),
+                title: title,
+                description: description || '无描述',
+                content: content,
+                tags: tags,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                source: 'gitee',
+                filePath: file.path
+            };
+        } catch (error) {
+            console.error('创建笔记对象失败:', error);
+            return null;
+        }
+    }
+
     filterNotes(searchTerm) {
         if (!searchTerm.trim()) {
             this.filteredNotes = [...this.notes];
@@ -330,19 +501,12 @@ class MobileNoteApp {
         }
         this.sortNotes();
         this.renderNotes();
+        this.renderSearchResults(); // 同时更新搜索结果
     }
 
     sortNotes() {
         this.filteredNotes.sort((a, b) => {
-            switch (this.sortBy) {
-                case 'created':
-                    return new Date(b.createdAt) - new Date(a.createdAt);
-                case 'title':
-                    return a.title.localeCompare(b.title, 'zh-CN');
-                case 'updated':
-                default:
-                    return new Date(b.updatedAt) - new Date(a.updatedAt);
-            }
+            return new Date(b.createdAt) - new Date(a.createdAt);
         });
     }
 
@@ -365,8 +529,7 @@ class MobileNoteApp {
                 emptyState.innerHTML = `
                     <div class="empty-icon">📝</div>
                     <h3>暂无笔记</h3>
-                    <p>点击同步按钮从Gitee获取笔记</p>
-                    <button class="sync-btn" onclick="app.syncWithGitee()">立即同步</button>
+                    <p>请前往设置页面配置并同步笔记</p>
                 `;
             }
             return;
@@ -379,7 +542,7 @@ class MobileNoteApp {
             <div class="note-item" data-note-id="${note.id}">
                 <div class="note-header">
                     <h3 class="note-title">${this.escapeHtml(note.title)}</h3>
-                    <span class="note-date">${this.formatDate(note.updatedAt)}</span>
+                    <span class="note-date">${this.formatDate(note.createdAt)}</span>
                 </div>
                 <p class="note-description">${this.escapeHtml(note.description)}</p>
                 <div class="note-footer">
@@ -388,7 +551,6 @@ class MobileNoteApp {
                             ${note.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
                         </div>
                     ` : ''}
-                    <span class="note-source">${note.source === 'gitee' ? 'Gitee' : '本地'}</span>
                 </div>
             </div>
         `).join('');
@@ -398,6 +560,59 @@ class MobileNoteApp {
             item.addEventListener('click', () => {
                 const noteId = item.dataset.noteId;
                 this.showNoteDetail(noteId);
+            });
+        });
+    }
+
+    renderSearchResults() {
+        const container = document.getElementById('searchResults');
+        const searchInput = document.getElementById('searchInput');
+        const searchTerm = searchInput.value.trim();
+        
+        if (!searchTerm) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        const filteredNotes = this.notes.filter(note => 
+            note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            note.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+        
+        if (filteredNotes.length === 0) {
+            container.innerHTML = `
+                <div class="search-empty">
+                    <div class="empty-icon">🔍</div>
+                    <h3>未找到匹配的笔记</h3>
+                    <p>尝试调整搜索关键词</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = filteredNotes.map(note => `
+            <div class="search-result-item" data-note-id="${note.id}">
+                <div class="result-header">
+                    <h4 class="result-title">${this.escapeHtml(note.title)}</h4>
+                    <span class="result-date">${this.formatDate(note.updatedAt)}</span>
+                </div>
+                <p class="result-description">${this.escapeHtml(note.description)}</p>
+                ${note.tags.length > 0 ? `
+                    <div class="result-tags">
+                        ${note.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+        
+        // 绑定点击事件
+        container.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const noteId = item.dataset.noteId;
+                this.showNoteDetail(noteId);
+                this.hideSearchView();
             });
         });
     }
@@ -448,37 +663,80 @@ class MobileNoteApp {
         
         // 更新设置界面
         if (this.giteeToken) {
-            document.getElementById('giteeToken').value = '••••••••';
+            document.getElementById('giteeToken').value = this.giteeToken;
         }
         if (this.giteeRepo) {
             document.getElementById('giteeRepo').value = this.giteeRepo;
         }
     }
 
-    saveSettings() {
-        const token = document.getElementById('giteeToken').value;
+    async saveSettings() {
+        const tokenInput = document.getElementById('giteeToken');
         const repo = document.getElementById('giteeRepo').value;
         
-        // 如果token是掩码，保持原值
-        if (token !== '••••••••') {
-            this.giteeToken = token;
-            localStorage.setItem('a-note-gitee-token', token);
+        // 更新Token设置
+        if (tokenInput.value) {
+            this.giteeToken = tokenInput.value;
+            localStorage.setItem('a-note-gitee-token', tokenInput.value);
+            
+            // 如果有Token但没有仓库，自动检测仓库
+            if (!repo) {
+                try {
+                    this.showMessage('正在自动检测仓库...', 'info');
+                    await this.detectRepository();
+                } catch (error) {
+                    console.error('自动检测仓库失败:', error);
+                    this.showMessage('自动检测仓库失败，请手动输入仓库名称', 'warning');
+                }
+            }
         }
         
-        this.giteeRepo = repo;
-        localStorage.setItem('a-note-gitee-repo', repo);
+        this.giteeRepo = repo || this.giteeRepo;
+        if (this.giteeRepo) {
+            localStorage.setItem('a-note-gitee-repo', this.giteeRepo);
+        }
         
-        this.showMessage('设置已保存', 'success');
-        setTimeout(() => this.showView('main'), 1000);
+        this.showMessage('设置已保存，正在自动同步笔记...', 'success');
+        
+        // 自动同步笔记
+        if (this.giteeToken && this.giteeRepo) {
+            try {
+                await this.syncWithGitee();
+            } catch (error) {
+                console.error('自动同步失败:', error);
+                this.showMessage('自动同步失败，请手动点击同步按钮重试', 'warning');
+            }
+        }
+    }
+
+    removeConfig() {
+        if (confirm('确定要移除配置吗？这将清除所有本地笔记和同步配置。')) {
+            // 清除Gitee配置
+            localStorage.removeItem('a-note-gitee-token');
+            localStorage.removeItem('a-note-gitee-repo');
+            
+            // 清除本地笔记
+            localStorage.removeItem('a-note-notes');
+            
+            // 重置应用状态
+            this.giteeToken = null;
+            this.giteeRepo = null;
+            this.notes = [];
+            this.filteredNotes = [];
+            
+            // 更新设置界面
+            document.getElementById('giteeToken').value = '';
+            document.getElementById('giteeRepo').value = '';
+            
+            // 更新主界面
+            this.renderNotes();
+            
+            this.showMessage('配置已移除，所有笔记已清除', 'success');
+        }
     }
 
     saveNotesToLocal() {
         localStorage.setItem('a-note-notes', JSON.stringify(this.notes));
-    }
-
-    refreshNotes() {
-        this.loadNotes();
-        this.showMessage('笔记已刷新', 'success');
     }
 
     showMessage(message, type = 'info') {
