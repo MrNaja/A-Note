@@ -41,14 +41,14 @@ body {
 .header {
     background: #f8f9fa; /* 灰色背景 */
     color: #333;
-    padding: 6px 10px; /* 调整上下间距为12px，左右为10px */
+    padding: 8px 16px; /* 统一上下间距为8px，左右为16px */
     position: sticky;
     top: 0;
     z-index: 100;
     border-bottom: 1px solid #e9ecef; /* 添加底部边框 */
     display: flex;
     align-items: center;
-    min-height: 40px; /* 确保头部有足够的高度 */
+    min-height: 48px; /* 统一最小高度为48px (8px + 32px + 8px) */
     box-sizing: border-box;
 }
 
@@ -148,13 +148,13 @@ body {
 .search-header {
     background: #f8f9fa; /* 灰色背景 */
     color: #333;
-    padding: 8px 16px; /* 调整上下间距为12px，左右为16px */
+    padding: 8px 16px; /* 统一上下间距为8px，左右为16px */
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 8px;
     border-bottom: 1px solid #e9ecef;
-    min-height: 40px; /* 确保头部有足够的高度 */
+    min-height: 48px; /* 统一最小高度为48px (8px + 32px + 8px) */
     box-sizing: border-box;
 }
 
@@ -713,7 +713,7 @@ body {
 /* 详情页面内容区域 */
 .detail-content {
     flex: 1;
-    padding: 10px;
+    padding: 8px 10px 10px 10px;
     overflow-y: auto;
 }
 

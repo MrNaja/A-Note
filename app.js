@@ -20,6 +20,9 @@ class MobileNoteApp {
         
         // 初始化浏览器历史记录
         this.initializeHistory();
+        
+        // 加载最后同步时间
+        this.loadLastSyncTime();
     }
 
 
@@ -78,8 +81,8 @@ class MobileNoteApp {
         document.getElementById(viewName + 'View').classList.add('active');
         
         // 滚动行为控制
-        if (viewName === 'detail') {
-            // 进入详情页面时滚动到顶部
+        if (viewName === 'detail' || viewName === 'settings') {
+            // 进入详情页面或设置页面时滚动到顶部
             window.scrollTo(0, 0);
         } else if (viewName === 'main') {
             // 返回主界面时恢复之前的滚动位置
@@ -136,6 +139,13 @@ class MobileNoteApp {
                 this.filteredNotes = [...this.notes];
                 this.sortNotes();
                 this.renderNotes();
+                // 更新设置页面的本地笔记数
+                this.updateSettingsInfo();
+            } else {
+                // 如果没有笔记数据，也更新设置页面
+                this.notes = [];
+                this.filteredNotes = [];
+                this.updateSettingsInfo();
             }
             
             // 不再自动同步，只在用户点击同步按钮时同步
@@ -326,6 +336,9 @@ class MobileNoteApp {
             console.log('最终笔记列表:', newNotes.map(n => n.title));
             
             this.showMessage(`同步成功，共${newNotes.length}条笔记`, 'success');
+            
+            // 更新最后同步时间
+            this.updateLastSyncTime();
             
             // 同步完成后自动返回主界面显示笔记
             setTimeout(() => {
@@ -778,6 +791,39 @@ class MobileNoteApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // 更新设置页面信息
+    updateSettingsInfo() {
+        const notesCountEl = document.getElementById('settingsNotesCount');
+        if (notesCountEl) {
+            notesCountEl.textContent = this.notes.length;
+        }
+    }
+
+    // 加载最后同步时间
+    loadLastSyncTime() {
+        const lastSyncEl = document.getElementById('settingsLastSync');
+        if (lastSyncEl) {
+            const lastSync = localStorage.getItem('a-note-last-sync');
+            if (lastSync) {
+                lastSyncEl.textContent = lastSync;
+            } else {
+                lastSyncEl.textContent = '从未同步';
+            }
+        }
+    }
+
+    // 更新最后同步时间
+    updateLastSyncTime() {
+        const now = new Date();
+        const formattedTime = now.toLocaleString('zh-CN');
+        localStorage.setItem('a-note-last-sync', formattedTime);
+        
+        const lastSyncEl = document.getElementById('settingsLastSync');
+        if (lastSyncEl) {
+            lastSyncEl.textContent = formattedTime;
+        }
     }
 }
 
