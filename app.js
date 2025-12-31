@@ -68,6 +68,9 @@ class MobileNoteApp {
         document.getElementById(viewName + 'View').classList.add('active');
         this.currentView = viewName;
         
+        // 滚动到页面顶部
+        window.scrollTo(0, 0);
+        
         // 特殊处理
         if (viewName === 'main') {
             this.renderNotes();
