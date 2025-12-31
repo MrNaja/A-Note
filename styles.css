@@ -28,10 +28,9 @@ body {
 
 /* 头部样式 */
 .header {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    color: white;
+    background: transparent;
+    color: #333;
     padding: 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -68,18 +67,42 @@ body {
     transform: scale(1.1);
 }
 
+.text-btn {
+    background: none;
+    border: 1px solid #e9ecef;
+    color: #333;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+}
+
+.text-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: #d0d7de;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .back-btn {
     background: none;
     border: none;
-    color: white;
-    font-size: 1.5rem;
+    color: #333;
     cursor: pointer;
     padding: 0.5rem;
     transition: transform 0.3s ease;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 12px solid #333;
+    border-left: none;
 }
 
 .back-btn:hover {
     transform: translateX(-2px);
+    border-right-color: #666;
 }
 
 .header-spacer {
@@ -100,10 +123,25 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: white;
+    background: #f8f9fa;
     z-index: 1000;
     display: none;
     flex-direction: column;
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .search-overlay {
+        left: 50%;
+        right: auto;
+        width: 100%;
+        max-width: 480px;
+        max-height: 800px;
+        transform: translateX(-50%);
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
 }
 
 .search-overlay.show {
@@ -111,18 +149,45 @@ body {
 }
 
 .search-header {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    color: white;
+    background: transparent;
+    color: #333;
     padding: 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.search-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.search-header .text-btn {
+    margin-right: 0.5rem;
+    min-width: 60px;
+}
+
+.settings-view .header-content .text-btn,
+#detailView .header-content .text-btn {
+    margin-right: 0.5rem;
+    min-width: 60px;
 }
 
 .search-content {
     flex: 1;
     padding: 1rem;
     overflow-y: auto;
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .search-content {
+        max-width: 480px;
+        margin: 0 auto;
+    }
 }
 
 .search-input-container {

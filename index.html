@@ -14,8 +14,8 @@
             <div class="header-content">
                 <h1 class="app-title">A Note</h1>
                 <div class="header-actions">
-                    <button id="searchBtn" class="icon-btn" title="搜索">🔍</button>
-                    <button id="settingsBtn" class="icon-btn" title="设置">⚙️</button>
+                    <button id="searchBtn" class="text-btn" title="搜索">搜索</button>
+                    <button id="settingsBtn" class="text-btn" title="设置">设置</button>
                 </div>
             </div>
         </header>
@@ -25,7 +25,7 @@
         <!-- 搜索界面 -->
         <div id="searchView" class="search-overlay">
             <div class="search-header">
-                <button id="closeSearchBtn" class="back-btn">←</button>
+                <button id="closeSearchBtn" class="text-btn">返回</button>
                 <h2>搜索笔记</h2>
                 <div class="header-spacer"></div>
             </div>
@@ -54,10 +54,10 @@
     </div>
     
     <!-- 设置界面 -->
-    <div id="settingsView" class="view">
+    <div id="settingsView" class="view settings-view">
         <header class="header">
             <div class="header-content">
-                <button id="backBtn" class="back-btn">←</button>
+                <button id="backBtn" class="text-btn">返回</button>
                 <h2>设置</h2>
                 <div class="header-spacer"></div>
             </div>
@@ -65,7 +65,7 @@
         
         <main class="settings-content">
             <div class="settings-section">
-                <h3>云端配置</h3>
+                <h3>Gitee云同步配置</h3>
                 <div class="form-group">
                     <label for="giteeToken">Access Token</label>
                     <input type="text" id="giteeToken" class="form-input" placeholder="输入Access Token">
@@ -111,7 +111,7 @@
     <div id="detailView" class="view">
         <header class="header">
             <div class="header-content">
-                <button id="backFromDetailBtn" class="back-btn">←</button>
+                <button id="backFromDetailBtn" class="text-btn">返回</button>
                 <h2 class="detail-title">笔记详情</h2>
                 <div class="header-spacer"></div>
             </div>
