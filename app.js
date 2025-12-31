@@ -66,10 +66,13 @@ class MobileNoteApp {
         
         // 显示目标视图
         document.getElementById(viewName + 'View').classList.add('active');
-        this.currentView = viewName;
         
-        // 滚动到页面顶部
-        window.scrollTo(0, 0);
+        // 滚动行为控制：只有进入详情页面时才滚动到顶部
+        if (viewName === 'detail') {
+            window.scrollTo(0, 0);
+        }
+        
+        this.currentView = viewName;
         
         // 特殊处理
         if (viewName === 'main') {
