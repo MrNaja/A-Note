@@ -6,6 +6,7 @@ class MobileNoteApp {
         this.currentView = 'main';
         this.giteeToken = null;
         this.giteeRepo = null;
+        this.mainViewScrollPosition = 0; // 记录主界面的滚动位置
         
         this.initializeApp();
     }
@@ -59,6 +60,11 @@ class MobileNoteApp {
     }
 
     showView(viewName) {
+        // 保存当前主界面的滚动位置
+        if (this.currentView === 'main') {
+            this.mainViewScrollPosition = window.scrollY;
+        }
+        
         // 隐藏所有视图
         document.querySelectorAll('.view').forEach(view => {
             view.classList.remove('active');
@@ -67,9 +73,15 @@ class MobileNoteApp {
         // 显示目标视图
         document.getElementById(viewName + 'View').classList.add('active');
         
-        // 滚动行为控制：只有进入详情页面时才滚动到顶部
+        // 滚动行为控制
         if (viewName === 'detail') {
+            // 进入详情页面时滚动到顶部
             window.scrollTo(0, 0);
+        } else if (viewName === 'main') {
+            // 返回主界面时恢复之前的滚动位置
+            setTimeout(() => {
+                window.scrollTo(0, this.mainViewScrollPosition);
+            }, 10);
         }
         
         this.currentView = viewName;
