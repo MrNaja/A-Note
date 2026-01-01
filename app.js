@@ -29,9 +29,20 @@ class MobileNoteApp {
 
     bindEvents() {
         // 视图切换
+        const addNoteBtn = document.getElementById('addNoteBtn');
+        if (addNoteBtn) {
+            console.log('新增按钮找到，绑定事件');
+            addNoteBtn.addEventListener('click', () => {
+                console.log('新增按钮被点击');
+                this.createNewNote();
+            });
+        } else {
+            console.error('新增按钮未找到');
+        }
+        
         document.getElementById('settingsBtn').addEventListener('click', () => this.showView('settings'));
         document.getElementById('backBtn').addEventListener('click', () => this.showView('main'));
-        document.getElementById('backFromDetailBtn').addEventListener('click', () => this.showView('main'));
+        document.getElementById('backFromDetailBtn').addEventListener('click', () => this.handleBackFromDetail());
         
         // 搜索功能
         document.getElementById('searchBtn').addEventListener('click', () => this.showSearchView());
@@ -51,6 +62,24 @@ class MobileNoteApp {
         
         // 移除配置
         document.getElementById('removeConfigBtn').addEventListener('click', () => this.removeConfig());
+        
+        // 同步笔记
+        document.getElementById('syncNotesBtn').addEventListener('click', () => this.syncWithGitee());
+        
+        // 上传笔记
+        document.getElementById('uploadNotesBtn').addEventListener('click', () => this.uploadNotesToGitee());
+        
+        // 字体大小按钮事件
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('font-size-btn')) {
+                const fontSize = e.target.dataset.size;
+                this.fontSize = fontSize;
+                localStorage.setItem('a-note-font-size', fontSize);
+                this.updateFontSizeButtons(fontSize);
+                this.applyFontSize();
+                this.showMessage(`字体大小已设置为${fontSize}`, 'success');
+            }
+        });
         
         // 同步功能（仅在设置页面）
         
@@ -96,8 +125,13 @@ class MobileNoteApp {
         // 特殊处理
         if (viewName === 'main') {
             this.renderNotes();
-        } else if (viewName === 'detail' && this.currentNote) {
-            this.renderNoteDetail();
+        } else if (viewName === 'detail') {
+            // 延迟渲染详情页面，确保currentNote已设置
+            setTimeout(() => {
+                if (this.currentNote) {
+                    this.renderNoteDetail();
+                }
+            }, 10);
         }
         
         // 管理浏览器历史记录（如果不是从历史记录触发的）
@@ -136,7 +170,10 @@ class MobileNoteApp {
             const savedNotes = localStorage.getItem('a-note-notes');
             if (savedNotes) {
                 this.notes = JSON.parse(savedNotes);
-                this.filteredNotes = [...this.notes];
+                // 过滤掉内容为空的笔记（与createNewNote保持一致）
+                this.filteredNotes = this.notes.filter(note => 
+                    note.content !== undefined
+                );
                 this.sortNotes();
                 this.renderNotes();
                 // 更新设置页面的本地笔记数
@@ -328,14 +365,17 @@ class MobileNoteApp {
             
             // 更新笔记列表
             this.notes = newNotes;
-            this.filteredNotes = [...this.notes];
+            // 过滤掉内容为空的笔记
+            this.filteredNotes = this.notes.filter(note => 
+                note.content && note.content.trim() !== ''
+            );
             this.sortNotes();
             this.saveNotesToLocal();
             this.renderNotes();
             
             console.log('最终笔记列表:', newNotes.map(n => n.title));
             
-            this.showMessage(`同步成功，共${newNotes.length}条笔记`, 'success');
+            this.showMessage(`同步成功，共${this.filteredNotes.length}条笔记`, 'success');
             
             // 更新最后同步时间
             this.updateLastSyncTime();
@@ -348,6 +388,157 @@ class MobileNoteApp {
             console.error('❌ Gitee同步失败:', error);
             this.showMessage('同步失败: ' + error.message, 'error');
         }
+    }
+
+    async uploadNotesToGitee() {
+        if (!this.giteeToken) {
+            this.showMessage('请先配置Access Token', 'warning');
+            this.showView('settings');
+            return;
+        }
+
+        // 如果没有仓库信息，先尝试自动检测
+        if (!this.giteeRepo) {
+            await this.detectRepository();
+            if (!this.giteeRepo) {
+                this.showMessage('请先配置仓库', 'warning');
+                return;
+            }
+        }
+
+        try {
+            console.log('=== 开始上传笔记 ===');
+            console.log('仓库路径:', this.giteeRepo);
+            console.log('本地笔记数:', this.notes.length);
+
+            // 显示上传进度
+            this.showMessage('正在上传笔记到Gitee...', 'info');
+
+            // 创建笔记目录（如果不存在）
+            await this.createNotesDirectory();
+
+            // 准备要上传的笔记数据
+            const notesData = this.notes.filter(note => note.content && note.content.trim() !== '');
+            console.log('要上传的有效笔记数:', notesData.length);
+
+            if (notesData.length === 0) {
+                this.showMessage('没有可上传的笔记', 'warning');
+                return;
+            }
+
+            // 创建上传数据
+            const uploadData = {
+                notes: notesData,
+                timestamp: new Date().toISOString(),
+                version: '1.3.0',
+                count: notesData.length
+            };
+
+            // 上传到Gitee
+            await this.uploadFileToGitee('notes/data.json', JSON.stringify(uploadData, null, 2));
+
+            console.log('✅ 上传成功');
+            this.showMessage(`上传成功，共${notesData.length}条笔记`, 'success');
+
+            // 更新最后同步时间
+            this.updateLastSyncTime();
+
+        } catch (error) {
+            console.error('❌ 上传失败:', error);
+            this.showMessage('上传失败: ' + error.message, 'error');
+        }
+    }
+
+    async createNotesDirectory() {
+        try {
+            // 检查notes目录是否存在
+            const files = await this.fetchGiteeFiles();
+            const notesDirExists = files.some(file => file.type === 'dir' && file.name === 'notes');
+            
+            if (!notesDirExists) {
+                // 创建notes目录
+                await this.createDirectoryInGitee('notes');
+                console.log('✅ 创建notes目录成功');
+            }
+        } catch (error) {
+            console.error('检查/创建notes目录失败:', error);
+            // 如果目录已存在或其他错误，继续上传
+        }
+    }
+
+    async createDirectoryInGitee(dirName) {
+        const url = `https://gitee.com/api/v5/repos/${this.giteeRepo}/contents/${dirName}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.giteeToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content: '', // 空内容表示创建目录
+                message: `创建笔记目录: ${dirName}`
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`创建目录失败: HTTP ${response.status}: ${errorText}`);
+        }
+    }
+
+    async uploadFileToGitee(filePath, content) {
+        const url = `https://gitee.com/api/v5/repos/${this.giteeRepo}/contents/${filePath}`;
+        
+        // 将内容转换为Base64
+        const base64Content = btoa(unescape(encodeURIComponent(content)));
+        
+        // 先尝试获取文件信息，检查是否已存在
+        let sha = null;
+        try {
+            const fileInfoResponse = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${this.giteeToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (fileInfoResponse.ok) {
+                const fileInfo = await fileInfoResponse.json();
+                sha = fileInfo.sha;
+                console.log('文件已存在，获取SHA:', sha);
+            }
+        } catch (error) {
+            console.log('文件不存在，将创建新文件');
+        }
+        
+        // 构建请求体
+        const requestBody = {
+            content: base64Content,
+            message: `上传笔记数据: ${new Date().toLocaleString()}`,
+            branch: 'master'
+        };
+        
+        // 如果文件已存在，添加SHA值
+        if (sha) {
+            requestBody.sha = sha;
+        }
+        
+        const response = await fetch(url, {
+            method: sha ? 'PUT' : 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.giteeToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`上传文件失败: HTTP ${response.status}: ${errorText}`);
+        }
+
+        console.log('✅ 文件上传成功:', filePath);
     }
 
     async fetchGiteeFiles(repoPath = this.giteeRepo, token = this.giteeToken, path = '') {
@@ -502,14 +693,18 @@ class MobileNoteApp {
 
     filterNotes(searchTerm) {
         if (!searchTerm.trim()) {
-            this.filteredNotes = [...this.notes];
+            // 过滤掉内容为空的笔记
+            this.filteredNotes = this.notes.filter(note => 
+                note.content && note.content.trim() !== ''
+            );
         } else {
             const term = searchTerm.toLowerCase();
             this.filteredNotes = this.notes.filter(note => 
-                note.title.toLowerCase().includes(term) ||
+                (note.title.toLowerCase().includes(term) ||
                 note.description.toLowerCase().includes(term) ||
                 note.content.toLowerCase().includes(term) ||
-                note.tags.some(tag => tag.toLowerCase().includes(term))
+                note.tags.some(tag => tag.toLowerCase().includes(term))) &&
+                note.content && note.content.trim() !== ''
             );
         }
         this.sortNotes();
@@ -554,7 +749,7 @@ class MobileNoteApp {
         container.innerHTML = this.filteredNotes.map(note => `
             <div class="note-item" data-note-id="${note.id}">
                 <div class="note-content-main">
-                    <p class="note-content">${this.escapeHtml(note.description)}</p>
+                    <p class="note-content">${this.escapeHtml(note.description || note.content.substring(0, 100) + (note.content.length > 100 ? '...' : ''))}</p>
                     <div class="note-meta">
                         <span class="note-date">${this.formatDate(note.createdAt)}</span>
                         ${note.tags.length > 0 ? `
@@ -635,6 +830,48 @@ class MobileNoteApp {
             this.showView('detail');
         }
     }
+    
+    createNewNote() {
+        console.log('createNewNote方法被调用');
+        
+        // 创建新的空白笔记
+        const newNote = {
+            id: Date.now().toString(),
+            title: '新笔记',
+            description: '',
+            content: '',
+            tags: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        console.log('创建新笔记:', newNote);
+        
+        // 添加到笔记列表开头
+        this.notes.unshift(newNote);
+        this.currentNote = newNote;
+        
+        console.log('当前笔记数:', this.notes.length);
+        
+        // 更新过滤后的笔记列表（包含空内容的笔记）
+        this.filteredNotes = this.notes.filter(note => 
+            note.content !== undefined
+        );
+        this.sortNotes();
+        
+        // 更新本地存储
+        this.saveNotesToLocal();
+        
+        // 显示详情页并直接进入编辑模式
+        console.log('准备显示详情页');
+        this.showView('detail');
+        
+        // 延迟进入编辑模式，确保DOM已渲染
+        setTimeout(() => {
+            console.log('进入编辑模式');
+            this.toggleEditMode();
+        }, 100);
+    }
 
     renderNoteDetail() {
         if (!this.currentNote) return;
@@ -645,11 +882,150 @@ class MobileNoteApp {
                 ${this.markdownToHtml(this.currentNote.content)}
             </div>
         `;
+        
+        // 添加按钮事件监听器
+        this.attachDetailButtonEvents();
+    }
+
+    attachDetailButtonEvents() {
+        // 删除按钮事件
+        const deleteBtn = document.getElementById('deleteNoteBtn');
+        if (deleteBtn) {
+            deleteBtn.onclick = () => this.deleteCurrentNote();
+        }
+        
+        // 编辑按钮事件
+        const editBtn = document.getElementById('editNoteBtn');
+        if (editBtn) {
+            editBtn.onclick = () => this.toggleEditMode();
+        }
+    }
+
+    deleteCurrentNote() {
+        if (!this.currentNote) return;
+        
+        // 确认删除
+        if (!confirm('确定要删除这条笔记吗？此操作不可撤销。')) {
+            return;
+        }
+        
+        try {
+            // 从笔记列表中移除当前笔记
+            const noteIndex = this.notes.findIndex(note => note.id === this.currentNote.id);
+            if (noteIndex !== -1) {
+                this.notes.splice(noteIndex, 1);
+                
+                // 同时从过滤后的笔记列表中移除
+                const filteredIndex = this.filteredNotes.findIndex(note => note.id === this.currentNote.id);
+                if (filteredIndex !== -1) {
+                    this.filteredNotes.splice(filteredIndex, 1);
+                }
+                
+                // 更新本地存储
+                this.saveNotesToLocal();
+                
+                // 显示成功消息
+                this.showMessage('笔记已删除', 'success');
+                
+                // 返回主界面并重新渲染笔记列表
+                // 注意：showView('main')会自动调用renderNotes()，所以不需要重复调用
+                this.showView('main');
+            }
+        } catch (error) {
+            console.error('删除笔记失败:', error);
+            this.showMessage('删除失败，请重试', 'error');
+        }
+    }
+
+    toggleEditMode() {
+        if (!this.currentNote) return;
+        
+        const container = document.getElementById('noteDetailContent');
+        const editBtn = document.getElementById('editNoteBtn');
+        
+        if (container.classList.contains('edit-mode')) {
+            // 退出编辑模式，保存修改
+            const contentEl = container.querySelector('.note-content');
+            if (contentEl) {
+                // 获取编辑后的HTML内容，并转换为纯文本格式
+                const editedHtml = contentEl.innerHTML.trim();
+                const newContent = this.htmlToMarkdown(editedHtml);
+                
+                if (newContent !== this.currentNote.content) {
+                    // 更新笔记内容
+                    this.currentNote.content = newContent;
+                    this.currentNote.updatedAt = new Date().toISOString();
+                    
+                    // 保存到本地存储
+                    this.saveNotesToLocal();
+                    
+                    // 重新渲染详情页
+                    this.renderNoteDetail();
+                    
+                    this.showMessage('笔记已保存', 'success');
+                }
+            }
+            
+            // 切换按钮文本
+            editBtn.textContent = '编辑';
+            container.classList.remove('edit-mode');
+            
+            // 移除编辑模式样式
+            contentEl?.removeAttribute('contenteditable');
+            contentEl?.classList.remove('editable');
+        } else {
+            // 进入编辑模式
+            const contentEl = container.querySelector('.note-content');
+            if (contentEl) {
+                // 设置内容可编辑
+                contentEl.setAttribute('contenteditable', 'true');
+                contentEl.classList.add('editable');
+                
+                // 切换按钮文本
+                editBtn.textContent = '完成';
+                container.classList.add('edit-mode');
+                
+                // 自动聚焦到内容区域，但不移动光标位置
+                contentEl.focus();
+                
+                // 将光标移动到开头，避免自动滚动到底部
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(contentEl);
+                range.collapse(true); // true表示移动到开头
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+    }
+
+
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     markdownToHtml(markdown) {
         // 将文本内容转换为HTML格式（支持Markdown语法）
-        return markdown
+        
+        // 首先处理代码块（需要先处理，避免被其他规则影响）
+        let html = markdown.replace(/```(\w*)\n([\s\S]*?)\n```/g, (match, language, code) => {
+            // 清理代码内容，移除多余的空行
+            code = code.replace(/^\n+|\n+$/g, '');
+            
+            // 转义HTML特殊字符
+            code = this.escapeHtml(code);
+            
+            // 添加语言标签
+            const langClass = language ? ` class="language-${language}"` : '';
+            
+            return `<pre><code${langClass}>${code}</code></pre>`;
+        });
+        
+        // 然后处理其他Markdown语法
+        html = html
             .replace(/^# (.*$)/gm, '<h1>$1</h1>')
             .replace(/^## (.*$)/gm, '<h2>$1</h2>')
             .replace(/^### (.*$)/gm, '<h3>$1</h3>')
@@ -660,19 +1036,82 @@ class MobileNoteApp {
             .replace(/\n/g, '<br>')
             .replace(/^<p>/, '')
             .replace(/<p>$/, '');
+            
+        return html;
+    }
+
+    htmlToMarkdown(html) {
+        // 增强的HTML到Markdown转换，更好地保留换行
+        return html
+            // 处理换行标签
+            .replace(/<br\s*\/?>/g, '\n')
+            // 处理代码块
+            .replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, '```\n$1\n```')
+            // 处理行内代码
+            .replace(/<code>([^<]+)<\/code>/g, '`$1`')
+            // 处理粗体
+            .replace(/<strong>([^<]+)<\/strong>/g, '**$1**')
+            // 处理斜体
+            .replace(/<em>([^<]+)<\/em>/g, '*$1*')
+            // 处理标题
+            .replace(/<h3>([^<]+)<\/h3>/g, '### $1\n\n')
+            .replace(/<h2>([^<]+)<\/h2>/g, '## $1\n\n')
+            .replace(/<h1>([^<]+)<\/h1>/g, '# $1\n\n')
+            // 增强段落处理：保留两个换行以维持段落间距
+            .replace(/<p>([\s\S]*?)<\/p>/g, '$1\n\n')
+            // 处理div等块级元素，添加额外的换行
+            .replace(/<div[^>]*>([\s\S]*?)<\/div>/g, '$1\n\n')
+            // 移除其他HTML标签
+            .replace(/<[^>]+>/g, '')
+            // 转换空格
+            .replace(/&nbsp;/g, ' ')
+            // 清理多余的换行
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
     }
 
     loadSettings() {
         this.giteeToken = localStorage.getItem('a-note-gitee-token');
         this.giteeRepo = localStorage.getItem('a-note-gitee-repo');
         
+        // 加载字体大小设置
+        const savedFontSize = localStorage.getItem('a-note-font-size') || '14px';
+        this.fontSize = savedFontSize;
+        
         // 更新设置界面
         if (this.giteeToken) {
             document.getElementById('giteeToken').value = this.giteeToken;
         }
+        
         if (this.giteeRepo) {
             document.getElementById('giteeRepo').value = this.giteeRepo;
         }
+        
+        // 更新字体大小按钮状态
+        this.updateFontSizeButtons(savedFontSize);
+        
+        // 应用字体大小
+        this.applyFontSize();
+    }
+
+    applyFontSize() {
+        // 设置CSS变量到:root
+        document.documentElement.style.setProperty('--note-font-size', this.fontSize);
+        
+        // 重新渲染笔记列表以适配新的高度
+        if (this.currentView === 'main') {
+            this.renderNotes();
+        }
+    }
+
+    updateFontSizeButtons(fontSize) {
+        const buttons = document.querySelectorAll('.font-size-btn');
+        buttons.forEach(button => {
+            button.classList.remove('active');
+            if (button.dataset.size === fontSize) {
+                button.classList.add('active');
+            }
+        });
     }
 
     async saveSettings() {
@@ -787,6 +1226,53 @@ class MobileNoteApp {
         });
     }
 
+    handleBackFromDetail() {
+        const container = document.getElementById('noteDetailContent');
+        
+        // 检查是否处于编辑模式
+        if (container.classList.contains('edit-mode')) {
+            // 处于编辑模式，先保存内容再返回
+            this.saveAndExitEditMode();
+        } else {
+            // 不在编辑模式，直接返回主界面
+            this.showView('main');
+        }
+    }
+
+    saveAndExitEditMode() {
+        if (!this.currentNote) return;
+        
+        const container = document.getElementById('noteDetailContent');
+        const contentEl = container.querySelector('.note-content');
+        const editBtn = document.getElementById('editNoteBtn');
+        
+        if (contentEl) {
+            // 获取编辑后的HTML内容，并转换为纯文本格式
+            const editedHtml = contentEl.innerHTML.trim();
+            const newContent = this.htmlToMarkdown(editedHtml);
+            
+            if (newContent !== this.currentNote.content) {
+                // 更新笔记内容
+                this.currentNote.content = newContent;
+                this.currentNote.updatedAt = new Date().toISOString();
+                
+                // 保存到本地存储
+                this.saveNotesToLocal();
+                
+                this.showMessage('笔记已保存', 'success');
+            }
+        }
+        
+        // 退出编辑模式
+        editBtn.textContent = '编辑';
+        container.classList.remove('edit-mode');
+        contentEl?.removeAttribute('contenteditable');
+        contentEl?.classList.remove('editable');
+        
+        // 返回主界面
+        this.showView('main');
+    }
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -869,32 +1355,41 @@ const messageStyles = `
     position: fixed;
     top: 20px;
     left: 50%;
-    transform: translateX(-50%) translateY(-100px);
-    background: #4f46e5;
+    transform: translateX(-50%) translateY(-100px) scale(0.8);
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
     color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 8px 8px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(79, 70, 229, 0.25);
     z-index: 1000;
-    transition: transform 0.3s ease;
-    max-width: 300px;
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    max-width: 320px;
     text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+    opacity: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .message.show {
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
 }
 
 .message-success {
-    background: #10b981;
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.25);
 }
 
 .message-warning {
-    background: #f59e0b;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.25);
 }
 
 .message-error {
-    background: #ef4444;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.25);
 }
 `;
 
